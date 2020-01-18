@@ -1493,26 +1493,26 @@ public class Camera2Engine extends CameraBaseEngine implements ImageReader.OnIma
   protected boolean applyPreviewFrameRate(
       @NonNull CaptureRequest.Builder builder,
       float oldPreviewFrameRate
-  ) {
-    //noinspection unchecked
+
+  ) {  //noinspection unchecked
     Range<Integer>[] fallback = new Range[]{};
     Range<Integer>[] fpsRanges = readCharacteristic(
         CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
         fallback
     );
-    sortRanges(fpsRanges);
-        if (mPreviewFrameRate == 0F) {
-            // 0F is a special value. Fallback to a reasonable default.
-            for (Range<Integer> fpsRange : fpsRanges) {
-                if (fpsRange.contains(30) || fpsRange.contains(24)) {
-                    builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
-                    return true;
-                }
-            }
-        } else {
-            // If out of boundaries, adjust it.
-            mPreviewFrameRate = Math.min(mPreviewFrameRate,
-                    mCameraOptions.getPreviewFrameRateMaxValue()
+    sortRanges(fpsRanges);if (mPreviewFrameRate == 0F) {
+      // 0F is a special value. Fallback to a reasonable default.
+      for (Range<Integer> fpsRange : fpsRanges) {
+        if (fpsRange.contains(30) || fpsRange.contains(24)) {
+          builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+          return true;
+        }
+      }
+    } else {
+      // If out of boundaries, adjust it.
+      mPreviewFrameRate = Math.min(
+          mPreviewFrameRate,
+          mCameraOptions.getPreviewFrameRateMaxValue()
       );
       mPreviewFrameRate = Math.max(
           mPreviewFrameRate,
@@ -1547,20 +1547,19 @@ public class Camera2Engine extends CameraBaseEngine implements ImageReader.OnIma
                 }
             });
         }
-    }
-
-    @Override
-    public void setPictureFormat(final @NonNull PictureFormat pictureFormat) {
-        if (pictureFormat != mPictureFormat) {
-            mPictureFormat = pictureFormat;
-            getOrchestrator().scheduleStateful("picture format (" + pictureFormat + ")",
-                    CameraState.ENGINE,
-                    new Runnable() {
-                @Override
-                public void run() {
-                    restart();
-                }
+    }@Override
+  public void setPictureFormat(final @NonNull PictureFormat pictureFormat) {
+    if (pictureFormat != mPictureFormat) {
+      mPictureFormat = pictureFormat;
+      getOrchestrator().scheduleStateful(
+          "picture format (" + pictureFormat + ")",
+          CameraState.ENGINE,
+          new Runnable() {
+            @Override
+            public void run() {
+              restart();
             }
+          }
       );
     }
   }
