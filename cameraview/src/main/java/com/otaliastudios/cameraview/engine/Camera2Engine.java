@@ -85,7 +85,7 @@ public class Camera2Engine extends CameraBaseEngine implements ImageReader.OnIma
   private static final long METER_TIMEOUT_SHORT = 2500;
 
   private static final String CAMERA_BACK_MAIN_SENSOR = "0";
-  private static final String CAMERA_BACK_WIDE_ANGLE_SENSOR = "2";
+  private static final String CAMERA_BACK_WIDE_ANGLE_SENSOR = "3";
 
   private final CameraManager mManager;
   private String mCameraId = CAMERA_BACK_MAIN_SENSOR;
