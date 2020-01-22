@@ -84,11 +84,11 @@ public class Camera2Engine extends CameraBaseEngine implements ImageReader.OnIma
   static final long METER_TIMEOUT = 5000;
   private static final long METER_TIMEOUT_SHORT = 2500;
 
-  private static final String CAMERA_BACK_MAIN_SENSOR = "0";
-  private static final String CAMERA_BACK_WIDE_ANGLE_SENSOR = "3";
+  private String mCameraBackMainSensorId = "0";
+  private String mCameraBackWideSensorId = "0";
 
   private final CameraManager mManager;
-  private String mCameraId = CAMERA_BACK_MAIN_SENSOR;
+  private String mCameraId = mCameraBackMainSensorId;
   private CameraDevice mCamera;
   private CameraCharacteristics mCameraCharacteristics;
   private CameraCaptureSession mSession;
@@ -375,34 +375,40 @@ public class Camera2Engine extends CameraBaseEngine implements ImageReader.OnIma
   @EngineThread
   @Override
   protected final boolean collectCameraInfo(@NonNull Facing facing) {
-//    int internalFacing = mMapper.mapFacing(facing);
-//    String[] cameraIds;
+    int internalFacing = mMapper.mapFacing(facing);
+    String[] cameraIds;
+    float minFocalLength = 100f;
 
-//    try {
-//      cameraIds = mManager.getCameraIdList();
-//    } catch (CameraAccessException e) {
-//      // This should never happen, I don't see how it could crash here.
-//      // However, let's launch an unrecoverable exception.
-//      throw createCameraException(e);
-//    }
+    try {
+      cameraIds = mManager.getCameraIdList();
+      for (String cameraId: cameraIds) {
+        CameraCharacteristics cameraCharacteristics = mManager.getCameraCharacteristics(cameraId);
+        if (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) != internalFacing) {
+          continue;
+        }
 
-//    LOG.i("collectCameraInfo", "Facing:", facing, "Internal:", internalFacing, "Cameras:", cameraIds.length);
+        float[] cameraFocalLength = cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+        if (cameraFocalLength[0] < minFocalLength) {
+          minFocalLength = cameraFocalLength[0];
+          mCameraBackWideSensorId = cameraId;
+        }
+      }
+    } catch (CameraAccessException e) {
+      // This should never happen, I don't see how it could crash here.
+      // However, let's launch an unrecoverable exception.
+      throw createCameraException(e);
+    }
 
-//    for (String cameraId : cameraIds) {
     try {
       CameraCharacteristics characteristics = mManager.getCameraCharacteristics(mCameraId);
 
-//        if (internalFacing == readCharacteristic(characteristics, CameraCharacteristics.LENS_FACING, -99)) {
-//      mCameraId = cameraId;
       int sensorOffset = readCharacteristic(characteristics, CameraCharacteristics.SENSOR_ORIENTATION, 0);
       getAngles().setSensorOffset(facing, sensorOffset);
       return true;
-//        }
     } catch (CameraAccessException ignore) {
       // This specific camera has been disconnected.
       // Keep searching in other camerIds.
     }
-//    }
 
     return false;
   }
@@ -1795,10 +1801,10 @@ public class Camera2Engine extends CameraBaseEngine implements ImageReader.OnIma
   }
 
   public void toggleBackWideCamera() {
-    toggleCamera(CAMERA_BACK_WIDE_ANGLE_SENSOR);
+    toggleCamera(mCameraBackWideSensorId);
   }
 
   public void toggleBackMainCamera() {
-    toggleCamera(CAMERA_BACK_MAIN_SENSOR);
+    toggleCamera(mCameraBackMainSensorId);
   }
 }
